@@ -13,7 +13,7 @@ import org.basex.query.func.*;
 
 /**
  * This class caches information on a single XQuery module with RESTXQ annotations.
- *
+ * 
  * @author BaseX Team 2005-12, BSD License
  * @author Christian Gruen
  */
@@ -46,9 +46,9 @@ final class RestXqModule {
     // loop through all functions
     final QueryContext qc = parse(http);
     try {
-      for(final StaticFunc uf : qc.funcs.funcs()) {
+      for(final XQStaticFunction uf : qc.funcs.funcs()) {
         // consider only functions that are defined in this module
-        if(!file.name().equals(new IOFile(uf.info.file()).name())) continue;
+        if(!file.name().equals(new IOFile(uf.getInfo().file()).name())) continue;
         final RestXqFunction rxf = new RestXqFunction(uf, qc, this);
         if(rxf.analyze()) functions.add(rxf);
       }
@@ -95,9 +95,9 @@ final class RestXqModule {
     final QueryContext qc = parse(http);
     try {
       // loop through all functions
-      for(final StaticFunc uf : qc.funcs.funcs()) {
+      for(final XQStaticFunction uf : qc.funcs.funcs()) {
         // compare input info
-        if(func.function.info.equals(uf.info)) {
+        if(func.function.getInfo().equals(uf.getInfo())) {
           // find and evaluate relevant function
           final RestXqFunction rxf = new RestXqFunction(uf, qc, this);
           rxf.analyze();

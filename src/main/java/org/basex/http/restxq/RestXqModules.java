@@ -13,7 +13,7 @@ import org.basex.util.*;
 
 /**
  * This class caches RESXQ modules found in the HTTP root directory.
- *
+ * 
  * @author BaseX Team 2005-12, BSD License
  * @author Christian Gruen
  */
@@ -25,8 +25,9 @@ final class RestXqModules {
   private HashMap<String, RestXqModule> modules = new HashMap<String, RestXqModule>();
   /** RESTXQ path. */
   private IOFile restxq;
+
   /** Private constructor. */
-  private RestXqModules() { }
+  private RestXqModules() {}
 
   /**
    * Returns the singleton instance.
@@ -57,7 +58,8 @@ final class RestXqModules {
     analyze(http);
     // collect all functions
     final ArrayList<RestXqFunction> list = new ArrayList<RestXqFunction>();
-    for(final RestXqModule mod : modules.values()) mod.add(http, list);
+    for(final RestXqModule mod : modules.values())
+      mod.add(http, list);
     // no path matches
     if(list.isEmpty()) return null;
     // choose most appropriate function
@@ -71,7 +73,7 @@ final class RestXqModules {
         final TokenBuilder tb = new TokenBuilder();
         for(final RestXqFunction rxf : list) {
           if(first.compareTo(rxf) != 0) break;
-          tb.add(Prop.NL).add(rxf.function.info.toString());
+          tb.add(Prop.NL).add(rxf.function.getInfo().toString());
         }
         first.error(PATH_CONFLICT, first.path, tb);
       }
@@ -89,8 +91,8 @@ final class RestXqModules {
     // initialize RESTXQ directory (may be relative against WEBPATH)
     if(restxq == null) {
       final File fl = new File(http.context().mprop.get(MainProp.RESTXQPATH));
-      restxq = fl.isAbsolute() ? new IOFile(fl) :
-        new IOFile(http.context().mprop.get(MainProp.WEBPATH), fl.getPath());
+      restxq = fl.isAbsolute() ? new IOFile(fl) : new IOFile(
+          http.context().mprop.get(MainProp.WEBPATH), fl.getPath());
     }
     // create new cache
     final HashMap<String, RestXqModule> cache = new HashMap<String, RestXqModule>();

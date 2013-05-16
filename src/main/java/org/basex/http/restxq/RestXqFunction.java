@@ -30,21 +30,20 @@ import org.basex.util.list.*;
 
 /**
  * This class represents a single RESTXQ function.
- *
+ * 
  * @author BaseX Team 2005-12, BSD License
  * @author Christian Gruen
  */
 final class RestXqFunction implements Comparable<RestXqFunction> {
   /** Pattern for a single template. */
-  private static final Pattern TEMPLATE =
-      Pattern.compile("\\s*\\{\\s*\\$(.+?)\\s*\\}\\s*");
+  private static final Pattern TEMPLATE = Pattern.compile("\\s*\\{\\s*\\$(.+?)\\s*\\}\\s*");
 
   /** Supported methods. */
   EnumSet<HTTPMethod> methods = EnumSet.allOf(HTTPMethod.class);
   /** Serialization parameters. */
   final SerializerProp output = new SerializerProp();
   /** Associated function. */
-  final StaticFunc function;
+  final XQStaticFunction function;
   /** Associated module. */
   final RestXqModule module;
   /** Path. */
@@ -74,15 +73,14 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
    * @param qc query context
    * @param m associated module
    */
-  RestXqFunction(final StaticFunc uf, final QueryContext qc, final RestXqModule m) {
+  RestXqFunction(final XQStaticFunction uf, final QueryContext qc, final RestXqModule m) {
     function = uf;
     context = qc;
     module = m;
   }
 
   /**
-   * Processes the HTTP request.
-   * Parses new modules and discards obsolete ones.
+   * Processes the HTTP request. Parses new modules and discards obsolete ones.
    * @param http HTTP context
    * @throws Exception exception
    */
@@ -90,7 +88,7 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
     try {
       module.process(http, this);
     } catch(final QueryException ex) {
-      if(ex.file() == null) ex.info(function.info);
+      if(ex.file() == null) ex.info(function.getInfo());
       throw ex;
     }
   }
@@ -103,12 +101,12 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
   boolean analyze() throws QueryException {
     // parse all annotations
     final EnumSet<HTTPMethod> mth = EnumSet.noneOf(HTTPMethod.class);
-    final boolean[] declared = new boolean[function.args.length];
+    final boolean[] declared = new boolean[function.getArgs().length];
     boolean found = false;
-    final int as = function.ann.size();
+    final int as = function.getAnn().size();
     for(int a = 0; a < as; a++) {
-      final QNm name = function.ann.names[a];
-      final Value value = function.ann.values[a];
+      final QNm name = function.getAnn().names[a];
+      final Value value = function.getAnn().values[a];
       final byte[] local = name.local();
       final byte[] uri = name.uri();
       final boolean rexq = eq(uri, QueryText.RESTXQURI);
@@ -165,7 +163,7 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
     if(found) {
       if(path == null) error(ANN_MISSING, PATH);
       for(int i = 0; i < declared.length; i++)
-        if(!declared[i]) error(VAR_UNDEFINED, function.args[i].name.string());
+        if(!declared[i]) error(VAR_UNDEFINED, function.getArgs()[i].name.string());
     }
     return found;
   }
@@ -177,8 +175,8 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
    */
   boolean matches(final HTTPContext http) {
     // check method, path, consumed and produced media type
-    return methods.contains(http.method) && pathMatches(http) &&
-        consumes(http) && produces(http);
+    return methods.contains(http.method) && pathMatches(http) && consumes(http)
+        && produces(http);
   }
 
   /**
@@ -214,7 +212,8 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
 
     // bind query parameters
     final Map<String, String[]> params = http.params();
-    for(final RestXqParam rxp : queryParams) bind(rxp, arg, params.get(rxp.key));
+    for(final RestXqParam rxp : queryParams)
+      bind(rxp, arg, params.get(rxp.key));
 
     // bind form parameters
     if(!formParams.isEmpty()) {
@@ -223,15 +222,17 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
         body = cache(http, body);
         addParams(body.toString(), params);
       }
-      for(final RestXqParam rxp : formParams) bind(rxp, arg, params.get(rxp.key));
+      for(final RestXqParam rxp : formParams)
+        bind(rxp, arg, params.get(rxp.key));
     }
 
     // bind header parameters
     for(final RestXqParam rxp : headerParams) {
       final StringList sl = new StringList();
-      final Enumeration<?> en =  http.req.getHeaders(rxp.key);
+      final Enumeration<?> en = http.req.getHeaders(rxp.key);
       while(en.hasMoreElements()) {
-        for(final String s : en.nextElement().toString().split(", *")) sl.add(s);
+        for(final String s : en.nextElement().toString().split(", *"))
+          sl.add(s);
       }
       bind(rxp, arg, sl.toArray());
     }
@@ -258,7 +259,7 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
    * @throws QueryException query exception
    */
   QueryException error(final String msg, final Object... ext) throws QueryException {
-    throw new QueryException(function.info, Err.BASX_RESTXQ, Util.info(msg, ext));
+    throw new QueryException(function.getInfo(), Err.BASX_RESTXQ, Util.info(msg, ext));
   }
 
   @Override
@@ -290,14 +291,15 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
    */
   private QNm checkVariable(final String tmp, final Type type, final boolean[] declared)
       throws QueryException {
-    final Var[] args = function.args;
+    final Var[] args = function.getArgs();
     final Matcher m = TEMPLATE.matcher(tmp);
     if(!m.find()) error(INV_TEMPLATE, tmp);
     final byte[] vn = token(m.group(1));
     if(!XMLToken.isQName(vn)) error(INV_VARNAME, vn);
     final QNm qnm = new QNm(vn, context);
     int r = -1;
-    while(++r < args.length && !args[r].name.eq(qnm));
+    while(++r < args.length && !args[r].name.eq(qnm))
+      ;
     if(r == args.length) error(UNKNOWN_VAR, vn);
     if(declared[r]) error(VAR_ASSIGNED, vn);
     final SeqType st = args[r].declaredType();
@@ -354,8 +356,8 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
    * Binds the specified parameter to a variable.
    * @param rxp parameter
    * @param args argument array
-   * @param values values to be bound; the parameter's default value is assigned
-   *        if the argument is {@code null} or empty
+   * @param values values to be bound; the parameter's default value is assigned if the
+   *          argument is {@code null} or empty
    * @throws QueryException query exception
    */
   private void bind(final RestXqParam rxp, final Expr[] args, final String... values)
@@ -365,7 +367,8 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
       val = rxp.value;
     } else {
       final ValueBuilder vb = new ValueBuilder();
-      for(final String s : values) vb.add(new Atm(s));
+      for(final String s : values)
+        vb.add(new Atm(s));
       val = vb.value();
     }
     bind(rxp.name, args, val);
@@ -383,8 +386,8 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
     // skip nulled values
     if(value == null) return;
 
-    for(int i = 0; i < function.args.length; i++) {
-      final Var var = function.args[i];
+    for(int i = 0; i < function.getArgs().length; i++) {
+      final Var var = function.getArgs()[i];
       if(!var.name.eq(name)) continue;
       // casts and binds the value
       args[i] = var.checkType(value, context, null);
@@ -415,7 +418,8 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
       throws QueryException {
 
     final long vs = value.size();
-    for(int v = 0; v < vs; v++) list.add(toString(value.itemAt(v), name));
+    for(int v = 0; v < vs; v++)
+      list.add(toString(value.itemAt(v), name));
   }
 
   /**
@@ -437,7 +441,8 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
     final QNm qnm = checkVariable(toString(value.itemAt(1), name), declared);
     // default value
     final ValueBuilder vb = new ValueBuilder();
-    for(int v = 2; v < vs; v++) vb.add(value.itemAt(v));
+    for(int v = 2; v < vs; v++)
+      vb.add(value.itemAt(v));
     return new RestXqParam(qnm, key, vb.value());
   }
 
@@ -470,7 +475,7 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
       final String[] parts = nv.split("=", 2);
       if(parts.length < 2) continue;
       try {
-        params.put(parts[0], new String[] { URLDecoder.decode(parts[1], Token.UTF8) });
+        params.put(parts[0], new String[] { URLDecoder.decode(parts[1], Token.UTF8)});
       } catch(final Exception ex) {
         Util.notexpected(ex);
       }

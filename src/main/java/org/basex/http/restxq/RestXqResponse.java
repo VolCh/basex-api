@@ -19,7 +19,7 @@ import org.basex.util.list.*;
 
 /**
  * This class creates a new HTTP response.
- *
+ * 
  * @author BaseX Team 2005-12, BSD License
  * @author Christian Gruen
  */
@@ -39,20 +39,20 @@ final class RestXqResponse {
   private static final ExtTest OUTPUT_SERIAL = new ExtTest(NodeType.ELM,
       FuncParams.Q_SPARAM);
   /** HTTP Response test. */
-  private static final ExtTest HTTP_RESPONSE = new ExtTest(NodeType.ELM,
-      new QNm(RESPONSE, QueryText.HTTPURI));
+  private static final ExtTest HTTP_RESPONSE = new ExtTest(NodeType.ELM, new QNm(
+      RESPONSE, QueryText.HTTPURI));
   /** RESTXQ Response test. */
-  private static final ExtTest RESTXQ_RESPONSE = new ExtTest(NodeType.ELM,
-      new QNm(RESPONSE, QueryText.RESTXQURI));
+  private static final ExtTest RESTXQ_RESPONSE = new ExtTest(NodeType.ELM, new QNm(
+      RESPONSE, QueryText.RESTXQURI));
   /** RESTXQ Redirect test. */
-  private static final ExtTest RESTXQ_REDIRECT = new ExtTest(NodeType.ELM,
-      new QNm(REDIRECT, QueryText.RESTXQURI));
+  private static final ExtTest RESTXQ_REDIRECT = new ExtTest(NodeType.ELM, new QNm(
+      REDIRECT, QueryText.RESTXQURI));
   /** RESTXQ Forward test. */
-  private static final ExtTest RESTXQ_FORWARD = new ExtTest(NodeType.ELM,
-      new QNm(FORWARD, QueryText.RESTXQURI));
+  private static final ExtTest RESTXQ_FORWARD = new ExtTest(NodeType.ELM, new QNm(
+      FORWARD, QueryText.RESTXQURI));
   /** HTTP Header test. */
-  private static final ExtTest HTTP_HEADER = new ExtTest(NodeType.ELM,
-      new QNm(HEADER, QueryText.HTTPURI));
+  private static final ExtTest HTTP_HEADER = new ExtTest(NodeType.ELM, new QNm(HEADER,
+      QueryText.HTTPURI));
 
   /** Function to be evaluated. */
   private final RestXqFunction function;
@@ -82,12 +82,15 @@ final class RestXqResponse {
 
     try {
       // bind variables
-      final StaticFunc uf = function.function;
-      final Expr[] args = new Expr[uf.args.length];
+      final XQStaticFunction uf = function.function;
+      final Expr[] args = new Expr[uf.getArgs().length];
       function.bind(http, args);
 
+//      System.out.println("wooosaa" + uf.getClass());
+      
       // wrap function with a function call
-      final StaticFuncCall call = new BaseFuncCall(uf.name, args, uf.sc, uf.info);
+      final StaticFuncCall call = new BaseFuncCall(uf.getName(), args, uf.getSc(),
+          uf.getInfo());
       call.init(uf);
       final MainModule mod = new MainModule(call, new VarScope());
 
@@ -98,7 +101,8 @@ final class RestXqResponse {
 
       // set database options
       final StringList o = qc.dbOptions;
-      for(int s = 0; s < o.size(); s += 2) qc.context.prop.set(o.get(s), o.get(s + 1));
+      for(int s = 0; s < o.size(); s += 2)
+        qc.context.prop.set(o.get(s), o.get(s + 1));
 
       // compile and evaluate query
       qc.compile();
@@ -138,7 +142,8 @@ final class RestXqResponse {
       final SerializerProp sp = process(resp);
       http.initResponse(sp);
       final Serializer ser = Serializer.get(http.res.getOutputStream(), sp);
-      for(; item != null; item = iter.next()) ser.serialize(item);
+      for(; item != null; item = iter.next())
+        ser.serialize(item);
       ser.close();
 
     } finally {
@@ -164,7 +169,8 @@ final class RestXqResponse {
 
     if(response != null) {
       // don't allow attributes
-      for(final ANode a : response.attributes()) function.error(UNEXP_NODE, a);
+      for(final ANode a : response.attributes())
+        function.error(UNEXP_NODE, a);
 
       String cType = null;
       for(final ANode n : response.children()) {
