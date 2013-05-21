@@ -10,8 +10,8 @@ import org.basex.core.*;
 import org.basex.http.*;
 import org.basex.io.*;
 import org.basex.security.*;
+import org.basex.security.impl.*;
 import org.basex.server.*;
-import org.basex.spi.*;
 import org.basex.util.*;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.nio.*;
@@ -73,7 +73,7 @@ public final class BaseXHTTP {
     context.moduleHandlers.addHandler(
         SecurityModuleHandler.NAMESPACE.getBytes(),
         new SecurityModuleHandler(
-            new AuthenticationImpl().addAuthenticationProvider(new InMemAuthentication().addUser(
+            context.authentication.addAuthenticationProvider(new InMemAuthenticationProvider().addUser(
                 Credentials.create("Bernd", "secure"), "USER").addUser(
                 Credentials.create("Admin", "secure"), "ADMIN"))));
 

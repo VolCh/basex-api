@@ -17,6 +17,7 @@ import org.basex.*;
 import org.basex.core.*;
 import org.basex.io.*;
 import org.basex.io.serial.*;
+import org.basex.security.*;
 import org.basex.server.*;
 import org.basex.util.*;
 import org.basex.util.list.*;
@@ -92,8 +93,9 @@ public final class HTTPContext {
       if(values[0].equals(BASIC)) {
         final String[] cred = Base64.decode(values[1]).split(":", 2);
         if(cred.length != 2) throw new LoginException(NOPASSWD);
-        user = cred[0];
-        pass = cred[1];
+//        user = cred[0];
+//        pass = cred[1];
+        context.authentication.authenticate(new Credentials(cred[0], cred[1]));
       } else {
         throw new LoginException(WHICHAUTH, values[0]);
       }
