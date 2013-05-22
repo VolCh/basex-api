@@ -11,6 +11,7 @@ import org.basex.http.*;
 import org.basex.io.*;
 import org.basex.security.*;
 import org.basex.security.impl.*;
+import org.basex.security.jaas.*;
 import org.basex.server.*;
 import org.basex.util.*;
 import org.eclipse.jetty.server.*;
@@ -29,7 +30,7 @@ public final class BaseXHTTP {
   /** Database context. */
   final Context context = HTTPContext.init();
   /** HTTP server. */
-  private final Server jetty;
+  private Server jetty;
   /** HTTP port. */
   private int httpPort;
   /** Start as daemon. */
@@ -63,19 +64,30 @@ public final class BaseXHTTP {
     final MainProp mprop = context.mprop;
     final String webapp = mprop.get(MainProp.WEBPATH);
     final WebAppContext wac = new WebAppContext(webapp, "/");
-    jetty = (Server) new XmlConfiguration(initJetty(webapp).inputStream()).configure();
-    jetty.setHandler(wac);
+    try {
+      jetty = (Server) new XmlConfiguration(initJetty(webapp).inputStream()).configure();
+      jetty.setHandler(wac);
 
-    String test_namespace = "http://schluck/specht";
-    context.moduleHandlers.addHandler(test_namespace.getBytes(),
-        new LoggingModuleHandler(test_namespace));
-    //
-    context.moduleHandlers.addHandler(
-        SecurityModuleHandler.NAMESPACE.getBytes(),
-        new SecurityModuleHandler(
-            context.authentication.addAuthenticationProvider(new InMemAuthenticationProvider().addUser(
-                Credentials.create("Bernd", "secure"), "USER").addUser(
-                Credentials.create("Admin", "secure"), "ADMIN"))));
+    } catch(final Exception e) {
+      e.printStackTrace();
+    }
+
+    // String test_namespace = "http://schluck/specht";
+    // context.moduleHandlers.addHandler(test_namespace.getBytes(),
+    // new LoggingModuleHandler(test_namespace));
+    // //
+    context.moduleHandlers.addHandler(SecurityModuleHandler.NAMESPACE.getBytes(),
+        new SecurityModuleHandler(context.sessionManager));
+
+    context.sessionManager.addAuthenticationProvider(new JaasAuthenticationProvider(
+        context));
+
+    context.sessionManager.addAuthenticationProvider(new InMemAuthenticationProvider().addUser(
+        Credentials.create("Bernd", "secure".toCharArray()),
+        "http://basex.org/modules/web-page:USER").addUser(
+        Credentials.create("Admin", "secure".toCharArray()),
+        "http://basex.org/modules/web-page:ADMIN").addUser(
+        Credentials.create("Guest", "secure".toCharArray())));
 
     // retrieve jetty port
     for(final Connector c : jetty.getConnectors()) {

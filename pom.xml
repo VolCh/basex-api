@@ -118,6 +118,11 @@
       <version>1.2.2</version>
     </dependency>
     <dependency>
+	<groupId>com.google.guava</groupId>
+	<artifactId>guava</artifactId>
+	<version>14.0.1</version>
+</dependency>
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-nop</artifactId>
       <version>1.5.8</version>

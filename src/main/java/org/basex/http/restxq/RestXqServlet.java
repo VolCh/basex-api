@@ -1,7 +1,6 @@
 package org.basex.http.restxq;
 
 import org.basex.http.*;
-import org.basex.security.impl.*;
 
 /**
  * <p>
@@ -36,7 +35,7 @@ public final class RestXqServlet extends BaseXServlet {
         func.process(http);
       }
     } finally {
-      SecurityContextHolder.clear();
+      http.context().sessionManager.closeSession();
     }
   }
 }

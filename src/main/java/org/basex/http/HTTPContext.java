@@ -24,7 +24,7 @@ import org.basex.util.list.*;
 
 /**
  * This class bundles context-based information on a single HTTP operation.
- *
+ * 
  * @author BaseX Team 2005-12, BSD License
  * @author Christian Gruen
  */
@@ -93,9 +93,10 @@ public final class HTTPContext {
       if(values[0].equals(BASIC)) {
         final String[] cred = Base64.decode(values[1]).split(":", 2);
         if(cred.length != 2) throw new LoginException(NOPASSWD);
-//        user = cred[0];
-//        pass = cred[1];
-        context.authentication.authenticate(new Credentials(cred[0], cred[1]));
+        // user = cred[0];
+        // pass = cred[1];
+        context.sessionManager.authenticate(new Credentials(cred[0],
+            cred[1].toCharArray()));
       } else {
         throw new LoginException(WHICHAUTH, values[0]);
       }
@@ -113,8 +114,8 @@ public final class HTTPContext {
       final Map<?, ?> map = req.getParameterMap();
       for(final Entry<?, ?> s : map.entrySet()) {
         final String key = s.getKey().toString();
-        final String[] vals = s.getValue() instanceof String[] ?
-            (String[]) s.getValue() : new String[] { s.getValue().toString() };
+        final String[] vals = s.getValue() instanceof String[] ? (String[]) s.getValue()
+                                                              : new String[] { s.getValue().toString()};
         params.put(key, vals);
       }
     } catch(final IllegalArgumentException ex) {
@@ -193,8 +194,8 @@ public final class HTTPContext {
   }
 
   /**
-   * Returns the addressed database (i.e., the first path entry), or {@code null}
-   * if the root directory was specified.
+   * Returns the addressed database (i.e., the first path entry), or {@code null} if the
+   * root directory was specified.
    * @return database
    */
   public String db() {
@@ -202,8 +203,8 @@ public final class HTTPContext {
   }
 
   /**
-   * Returns an array with all accepted content types.
-   * if the root directory was specified.
+   * Returns an array with all accepted content types. if the root directory was
+   * specified.
    * @return database
    */
   public String[] produces() {
@@ -247,13 +248,14 @@ public final class HTTPContext {
     if(session == null) {
       final byte[] address = token(req.getRemoteAddr());
       try {
-        if(user == null || user.isEmpty() || pass == null || pass.isEmpty())
-          throw new LoginException(NOPASSWD);
+        if(user == null || user.isEmpty() || pass == null || pass.isEmpty()) throw new LoginException(
+            NOPASSWD);
         session = new LocalSession(context(), user, pass);
         context.blocker.remove(address);
       } catch(final LoginException ex) {
         // delay users with wrong passwords
-        for(int d = context.blocker.delay(address); d > 0; d--) Performance.sleep(1000);
+        for(int d = context.blocker.delay(address); d > 0; d--)
+          Performance.sleep(1000);
         throw ex;
       }
     }
@@ -282,9 +284,8 @@ public final class HTTPContext {
    */
   public void log(final String info, final Object type) {
     // add evaluation time if any type is specified
-    context.log.write(type != null ?
-      new Object[] { address(), context.user.name, type, info, perf } :
-      new Object[] { address(), context.user.name, null, info });
+    context.log.write(type != null ? new Object[] { address(), context.user.name, type,
+        info, perf} : new Object[] { address(), context.user.name, null, info});
   }
 
   // STATIC METHODS =====================================================================
@@ -299,8 +300,8 @@ public final class HTTPContext {
   }
 
   /**
-   * Initializes the database context, based on the initial servlet context.
-   * Parses all context parameters and passes them on to the database context.
+   * Initializes the database context, based on the initial servlet context. Parses all
+   * context parameters and passes them on to the database context.
    * @param sc servlet context
    * @throws IOException I/O exception
    */
@@ -335,8 +336,8 @@ public final class HTTPContext {
       }
       k = k.toLowerCase(Locale.ENGLISH);
       if(!k.equals(key) || !v.equals(val)) {
-        Util.errln("Warning! Outdated property: " +
-          key + '=' + val + " => " + k + '=' + v);
+        Util.errln("Warning! Outdated property: " + key + '=' + val + " => " + k + '='
+            + v);
       }
 
       // prefix relative paths with absolute servlet path
