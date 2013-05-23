@@ -84,9 +84,9 @@ public final class BaseXHTTP {
 
     context.sessionManager.addAuthenticationProvider(new InMemAuthenticationProvider().addUser(
         Credentials.create("Bernd", "secure".toCharArray()),
-        "http://basex.org/modules/web-page:USER").addUser(
+        "http://item-store.com/module:USER").addUser(
         Credentials.create("Admin", "secure".toCharArray()),
-        "http://basex.org/modules/web-page:ADMIN").addUser(
+        "http://item-store.com/module:ADMIN", "http://item-store.com/module:USER").addUser(
         Credentials.create("Guest", "secure".toCharArray())));
 
     // retrieve jetty port
