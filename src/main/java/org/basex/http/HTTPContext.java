@@ -22,6 +22,8 @@ import org.basex.server.*;
 import org.basex.util.*;
 import org.basex.util.list.*;
 
+import com.google.common.base.*;
+
 /**
  * This class bundles context-based information on a single HTTP operation.
  * 
@@ -95,8 +97,12 @@ public final class HTTPContext {
         if(cred.length != 2) throw new LoginException(NOPASSWD);
         // user = cred[0];
         // pass = cred[1];
-        context.sessionManager.authenticate(new Credentials(cred[0],
-            cred[1].toCharArray()));
+        try {
+          context.sessionManager.authenticate(new Credentials(cred[0],
+              cred[1].toCharArray()));
+        } catch(final NotAuthenticatedException e) {
+          throw Throwables.propagate(e);
+        }
       } else {
         throw new LoginException(WHICHAUTH, values[0]);
       }

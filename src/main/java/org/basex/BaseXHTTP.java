@@ -77,7 +77,7 @@ public final class BaseXHTTP {
     // new LoggingModuleHandler(test_namespace));
     // //
     context.moduleHandlers.addHandler(SecurityModuleHandler.NAMESPACE.getBytes(),
-        new SecurityModuleHandler(context.sessionManager));
+        new SecurityModuleHandler());
 
     context.sessionManager.addAuthenticationProvider(new JaasAuthenticationProvider(
         context));
@@ -86,7 +86,7 @@ public final class BaseXHTTP {
         Credentials.create("Bernd", "secure".toCharArray()),
         "http://item-store.com/module:USER").addUser(
         Credentials.create("Admin", "secure".toCharArray()),
-        "http://item-store.com/module:ADMIN", "http://item-store.com/module:USER").addUser(
+        "Q{http://item-store.com/module}ADMIN", "Q{http://item-store.com/module}USER").addUser(
         Credentials.create("Guest", "secure".toCharArray())));
 
     // retrieve jetty port
