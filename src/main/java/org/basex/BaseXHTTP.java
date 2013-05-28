@@ -79,12 +79,12 @@ public final class BaseXHTTP {
     context.moduleHandlers.addHandler(SecurityModuleHandler.NAMESPACE.getBytes(),
         new SecurityModuleHandler());
 
-    context.sessionManager.addAuthenticationProvider(new JaasAuthenticationProvider(
+    context.securityManager.addAuthenticationProvider(new JaasAuthenticationProvider(
         context));
 
-    context.sessionManager.addAuthenticationProvider(new InMemAuthenticationProvider().addUser(
+    context.securityManager.addAuthenticationProvider(new InMemAuthenticationProvider().addUser(
         Credentials.create("Bernd", "secure".toCharArray()),
-        "http://item-store.com/module:USER").addUser(
+        "Q{http://item-store.com/module}USER").addUser(
         Credentials.create("Admin", "secure".toCharArray()),
         "Q{http://item-store.com/module}ADMIN", "Q{http://item-store.com/module}USER").addUser(
         Credentials.create("Guest", "secure".toCharArray())));

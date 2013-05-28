@@ -35,7 +35,11 @@ public final class RestXqServlet extends BaseXServlet {
         func.process(http);
       }
     } finally {
-      http.context().sessionManager.closeSession();
+      try {
+        http.context().securityManager.stopSession();
+      } catch(final Exception e) {
+        // TODO: handle exception
+      }
     }
   }
 }

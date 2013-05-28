@@ -86,8 +86,8 @@ final class RestXqResponse {
       final Expr[] args = new Expr[uf.getArgs().length];
       function.bind(http, args);
 
-//      System.out.println("wooosaa" + uf.getClass());
-      
+      // System.out.println("wooosaa" + uf.getClass());
+
       // wrap function with a function call
       final StaticFuncCall call = new BaseFuncCall(uf.getName(), args, uf.getSc(),
           uf.getInfo());
@@ -148,7 +148,12 @@ final class RestXqResponse {
 
     } finally {
       qc.close();
-      qc.context.unregister(qc);
+      try {
+        qc.context.unregister(qc);
+
+      } catch(final Exception e) {
+        e.printStackTrace();
+      }
 
       if(redirect != null) {
         http.res.sendRedirect(redirect);
