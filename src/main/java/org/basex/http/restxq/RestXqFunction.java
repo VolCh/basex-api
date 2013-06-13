@@ -162,10 +162,10 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
     if(!mth.isEmpty()) methods = mth;
 
     if(found) {
-      if(path == null) error(function.info, ANN_MISSING, PATH);
+      if(path == null) error(function.getInfo(), ANN_MISSING, PATH);
       for(int i = 0; i < declared.length; i++) {
         if(declared[i]) continue;
-        error(function.info, VAR_UNDEFINED, function.args[i].name.string());
+        error(function.getInfo(), VAR_UNDEFINED, function.getArgs()[i].name.string());
       }
     }
     return found;
@@ -262,7 +262,7 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
    * @throws QueryException query exception
    */
   QueryException error(final String msg, final Object... ext) throws QueryException {
-    throw error(function.info, msg, ext);
+    throw error(function.getInfo(), msg, ext);
   }
 
   /**
@@ -423,7 +423,7 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
    */
   private String toString(final Value value, final QNm name) throws QueryException {
     if(!(value instanceof Str))
-      error(function.info, ANN_STRING, "%", name.string(), value);
+      error(function.getInfo(), ANN_STRING, "%", name.string(), value);
     return ((Str) value).toJava();
   }
 
@@ -454,7 +454,7 @@ final class RestXqFunction implements Comparable<RestXqFunction> {
       throws QueryException {
     // [CG] RESTXQ: allow identical field names?
     final long vs = value.size();
-    if(vs < 2) error(function.info, ANN_PARAMS, "%", name.string(), 2);
+    if(vs < 2) error(function.getInfo(), ANN_PARAMS, "%", name.string(), 2);
     // name of parameter
     final String key = toString(value.itemAt(0), name);
     // variable template
