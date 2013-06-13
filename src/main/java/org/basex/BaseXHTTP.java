@@ -9,7 +9,6 @@ import java.net.*;
 import org.basex.core.*;
 import org.basex.http.*;
 import org.basex.io.*;
-import org.basex.security.*;
 import org.basex.security.impl.*;
 import org.basex.security.jaas.*;
 import org.basex.server.*;
@@ -63,34 +62,17 @@ public final class BaseXHTTP {
     // context must be initialized after parsing of arguments
     context = HTTPContext.init();
 
+    context.moduleHandlers.addHandler(SecurityModuleHandler.NAMESPACE.getBytes(),
+        new SecurityModuleHandler());
+    context.securityManager.addAuthenticationProvider(new JaasAuthenticationProvider(
+        context));
+
     // create jetty instance and set default context to HTTP path
     final MainProp mprop = context.mprop;
     final String webapp = mprop.get(MainProp.WEBPATH);
     final WebAppContext wac = new WebAppContext(webapp, "/");
-    try {
-      jetty = (Server) new XmlConfiguration(initJetty(webapp).inputStream()).configure();
-      jetty.setHandler(wac);
-
-    } catch(final Exception e) {
-      e.printStackTrace();
-    }
-
-    // String test_namespace = "http://schluck/specht";
-    // context.moduleHandlers.addHandler(test_namespace.getBytes(),
-    // new LoggingModuleHandler(test_namespace));
-    // //
-    context.moduleHandlers.addHandler(SecurityModuleHandler.NAMESPACE.getBytes(),
-        new SecurityModuleHandler());
-
-    context.securityManager.addAuthenticationProvider(new JaasAuthenticationProvider(
-        context));
-
-    context.securityManager.addAuthenticationProvider(new InMemAuthenticationProvider().addUser(
-        Credentials.create("Bernd", "secure".toCharArray()),
-        "Q{http://item-store.com/module}USER").addUser(
-        Credentials.create("Admin", "secure".toCharArray()),
-        "Q{http://item-store.com/module}ADMIN", "Q{http://item-store.com/module}USER").addUser(
-        Credentials.create("Guest", "secure".toCharArray())));
+    jetty = (Server) new XmlConfiguration(initJetty(webapp).inputStream()).configure();
+    jetty.setHandler(wac);
 
     // retrieve jetty port
     for(final Connector c : jetty.getConnectors()) {

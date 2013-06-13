@@ -15,6 +15,7 @@ import org.basex.query.value.item.*;
 import org.basex.query.value.node.*;
 import org.basex.query.value.type.*;
 import org.basex.query.var.*;
+import org.basex.util.*;
 
 /**
  * This class creates a new HTTP response.
@@ -41,14 +42,14 @@ final class RestXqResponse {
   private static final ExtTest HTTP_RESPONSE = new ExtTest(NodeType.ELM, new QNm(
       RESPONSE, QueryText.HTTPURI));
   /** RESTXQ Response test. */
-  private static final ExtTest REST_RESPONSE = new ExtTest(NodeType.ELM,
-      new QNm(RESPONSE, QueryText.RESTURI));
+  private static final ExtTest REST_RESPONSE = new ExtTest(NodeType.ELM, new QNm(
+      RESPONSE, QueryText.RESTURI));
   /** RESTXQ Redirect test. */
-  private static final ExtTest REST_REDIRECT = new ExtTest(NodeType.ELM,
-      new QNm(REDIRECT, QueryText.RESTURI));
+  private static final ExtTest REST_REDIRECT = new ExtTest(NodeType.ELM, new QNm(
+      REDIRECT, QueryText.RESTURI));
   /** RESTXQ Forward test. */
-  private static final ExtTest REST_FORWARD = new ExtTest(NodeType.ELM,
-      new QNm(FORWARD, QueryText.RESTURI));
+  private static final ExtTest REST_FORWARD = new ExtTest(NodeType.ELM, new QNm(FORWARD,
+      QueryText.RESTURI));
   /** HTTP Header test. */
   private static final ExtTest HTTP_HEADER = new ExtTest(NodeType.ELM, new QNm(HEADER,
       QueryText.HTTPURI));
@@ -141,6 +142,11 @@ final class RestXqResponse {
       ser.close();
 
     } finally {
+      if(qc.context.securityManager.isAuthenticated()) {
+        Util.errln(
+            "Security crtical situation! the user %s is still authenticated in the current thread! This should never be the case after a finished request!",
+            qc.context.securityManager.getUserName());
+      }
       qc.close();
       try {
         qc.context.unregister(qc);
