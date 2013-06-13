@@ -19,11 +19,11 @@ import org.basex.query.func.*;
  */
 final class RestXqModule {
   /** Supported methods. */
-  final ArrayList<RestXqFunction> functions = new ArrayList<RestXqFunction>();
+  private final ArrayList<RestXqFunction> functions = new ArrayList<RestXqFunction>();
   /** File reference. */
-  final IOFile file;
+  private final IOFile file;
   /** Parsing timestamp. */
-  long time;
+  private long time;
 
   /**
    * Constructor.
@@ -74,6 +74,14 @@ final class RestXqModule {
   }
 
   /**
+   * Returns all functions.
+   * @return functions
+   */
+  ArrayList<RestXqFunction> functions() {
+    return functions;
+  }
+
+  /**
    * Adds functions that match the current request.
    * @param http http context
    * @param list list of functions
@@ -121,7 +129,7 @@ final class RestXqModule {
   private QueryContext parse(final HTTPContext http) throws QueryException {
     final QueryContext qc = new QueryContext(http.context());
     try {
-      qc.module(string(file.read()), file.path());
+      qc.parseLibrary(string(file.read()), file.path());
       return qc;
     } catch(final IOException ex) {
       throw IOERR.thrw(null, ex);

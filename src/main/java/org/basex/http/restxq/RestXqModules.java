@@ -9,15 +9,16 @@ import org.basex.core.*;
 import org.basex.http.*;
 import org.basex.io.*;
 import org.basex.query.*;
+import org.basex.query.value.node.*;
 import org.basex.util.*;
 
 /**
- * This class caches RESXQ modules found in the HTTP root directory.
- * 
+ * This class caches RESTXQ modules found in the HTTP root directory.
+ *
  * @author BaseX Team 2005-12, BSD License
  * @author Christian Gruen
  */
-final class RestXqModules {
+public final class RestXqModules {
   /** Class instance. */
   private static final RestXqModules INSTANCE = new RestXqModules();
 
@@ -33,19 +34,19 @@ final class RestXqModules {
    * Returns the singleton instance.
    * @return instance
    */
-  static RestXqModules get() {
+  public static RestXqModules get() {
     return INSTANCE;
   }
 
   /**
-   * Lists all available URIs.
+   * Returns a WADL description for all available URIs.
    * @param http HTTP context
+   * @return WADL description
    * @throws QueryException query exception
-   * @throws IOException I/O exception
    */
-  synchronized void wadl(final HTTPContext http) throws QueryException, IOException {
+  public synchronized FElem wadl(final HTTPContext http) throws QueryException {
     analyze(http);
-    new RestXqWadl().create(http, modules);
+    return new RestXqWadl(http).create(modules);
   }
 
   /**

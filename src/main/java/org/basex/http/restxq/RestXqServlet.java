@@ -22,24 +22,13 @@ public final class RestXqServlet extends BaseXServlet {
   protected void run(final HTTPContext http) throws Exception {
     // authenticate user
     http.session();
-    try {
-      final RestXqModules rxm = RestXqModules.get();
-      if(('/' + HTTPText.WADL).equals(http.req.getPathInfo())) {
-        // return application.wadl
-        rxm.wadl(http);
-      } else {
-        // select XQuery function
-        final RestXqFunction func = rxm.find(http);
-        if(func == null) HTTPErr.NO_XQUERY.thrw();
-        // process function
-        func.process(http);
-      }
-    } finally {
-      try {
-        http.context().securityManager.stopSession();
-      } catch(final Exception e) {
-        // TODO: handle exception
-      }
-    }
+
+    // analyze input path
+    final RestXqModules rxm = RestXqModules.get();
+    // select XQuery function
+    final RestXqFunction func = rxm.find(http);
+    if(func == null) HTTPErr.NO_XQUERY.thrw();
+    // process function
+    func.process(http);
   }
 }

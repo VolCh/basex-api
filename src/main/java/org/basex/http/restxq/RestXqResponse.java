@@ -15,7 +15,6 @@ import org.basex.query.value.item.*;
 import org.basex.query.value.node.*;
 import org.basex.query.value.type.*;
 import org.basex.query.var.*;
-import org.basex.util.list.*;
 
 /**
  * This class creates a new HTTP response.
@@ -42,14 +41,14 @@ final class RestXqResponse {
   private static final ExtTest HTTP_RESPONSE = new ExtTest(NodeType.ELM, new QNm(
       RESPONSE, QueryText.HTTPURI));
   /** RESTXQ Response test. */
-  private static final ExtTest RESTXQ_RESPONSE = new ExtTest(NodeType.ELM, new QNm(
-      RESPONSE, QueryText.RESTXQURI));
+  private static final ExtTest REST_RESPONSE = new ExtTest(NodeType.ELM,
+      new QNm(RESPONSE, QueryText.RESTURI));
   /** RESTXQ Redirect test. */
-  private static final ExtTest RESTXQ_REDIRECT = new ExtTest(NodeType.ELM, new QNm(
-      REDIRECT, QueryText.RESTXQURI));
+  private static final ExtTest REST_REDIRECT = new ExtTest(NodeType.ELM,
+      new QNm(REDIRECT, QueryText.RESTURI));
   /** RESTXQ Forward test. */
-  private static final ExtTest RESTXQ_FORWARD = new ExtTest(NodeType.ELM, new QNm(
-      FORWARD, QueryText.RESTXQURI));
+  private static final ExtTest REST_FORWARD = new ExtTest(NodeType.ELM,
+      new QNm(FORWARD, QueryText.RESTURI));
   /** HTTP Header test. */
   private static final ExtTest HTTP_HEADER = new ExtTest(NodeType.ELM, new QNm(HEADER,
       QueryText.HTTPURI));
@@ -92,17 +91,12 @@ final class RestXqResponse {
       final StaticFuncCall call = new BaseFuncCall(uf.getName(), args, uf.getSc(),
           uf.getInfo());
       call.init(uf);
-      final MainModule mod = new MainModule(call, new VarScope());
+      final MainModule mod = new MainModule(call, new VarScope(), null);
 
       // assign main module and http context and register process
       qc.mainModule(mod);
       qc.context(http, null);
       qc.context.register(qc);
-
-      // set database options
-      final StringList o = qc.dbOptions;
-      for(int s = 0; s < o.size(); s += 2)
-        qc.context.prop.set(o.get(s), o.get(s + 1));
 
       // compile and evaluate query
       qc.compile();
@@ -114,20 +108,20 @@ final class RestXqResponse {
       if(item != null && item.type.isNode()) {
         final ANode node = (ANode) item;
         // send redirect to browser
-        if(RESTXQ_REDIRECT.eq(node)) {
+        if(REST_REDIRECT.eq(node)) {
           final ANode ch = node.children().next();
           if(ch == null || ch.type != NodeType.TXT) function.error(NO_VALUE, node.name());
           redirect = string(ch.string()).trim();
           return;
         }
         // server-side forwarding
-        if(RESTXQ_FORWARD.eq(node)) {
+        if(REST_FORWARD.eq(node)) {
           final ANode ch = node.children().next();
           if(ch == null || ch.type != NodeType.TXT) function.error(NO_VALUE, node.name());
           forward = string(ch.string()).trim();
           return;
         }
-        if(RESTXQ_RESPONSE.eq(node)) {
+        if(REST_RESPONSE.eq(node)) {
           resp = node;
           item = iter.next();
         }
