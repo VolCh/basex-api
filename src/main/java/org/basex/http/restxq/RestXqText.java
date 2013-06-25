@@ -1,6 +1,11 @@
 package org.basex.http.restxq;
 
+import static org.basex.query.QueryText.*;
 import static org.basex.util.Token.*;
+
+import org.basex.query.func.*;
+import org.basex.query.path.*;
+import org.basex.query.value.item.*;
 
 /**
  * This class assembles texts which are used in the HTTP classes.
@@ -9,6 +14,8 @@ import static org.basex.util.Token.*;
  * @author Christian Gruen
  */
 public interface RestXqText {
+  /** Token "error". */
+  byte[] ERROR = token("error");
   /** Token "path". */
   byte[] PATH = token("path");
   /** Token "produces". */
@@ -23,6 +30,8 @@ public interface RestXqText {
   byte[] HEADER_PARAM = token("header-param");
   /** Token "cookie-param". */
   byte[] COOKIE_PARAM = token("cookie-param");
+  /** Token "query-param". */
+  byte[] ERROR_PARAM = token("error-param");
 
   /** Token "header". */
   byte[] HEADER = token("header");
@@ -49,19 +58,25 @@ public interface RestXqText {
   String XHTML_URL = "http://www.w3.org/1999/xhtml";
 
   /** Error message. */
-  String ANN_MISSING = "Annotation % is missing.";
+  String ANN_MISSING = "Annotation %% or %% missing.";
   /** Error message. */
   String ANN_TWICE = "Annotation %% is specified more than once.";
   /** Error message. */
   String ANN_UNKNOWN = "Annotation %% is invalid or not supported.";
   /** Error message. */
-  String ANN_PARAMS = "Annotation %% requires at least % parameter(s).";
+  String ANN_ATLEAST = "Annotation %% requires at least % parameter(s).";
+  /** Error message. */
+  String ANN_EXACTLY = "Annotation %% requires exactly % parameter(s).";
   /** Error message. */
   String ANN_STRING = "Single string expected for %%, found: %.";
   /** Error message. */
   String INV_TEMPLATE = "Invalid path template: \"%\".";
   /** Error message. */
   String INV_VARNAME = "Invalid variable name: $%.";
+  /** Error message. */
+  String INV_CODE = "Invalid error code: '%'.";
+  /** Error message. */
+  String INV_NONS = "No namespace declared for '%'.";
   /** Error message. */
   String INV_VARTYPE = "Variable $% must inherit from %.";
   /** Error message. */
@@ -75,7 +90,7 @@ public interface RestXqText {
   /** Error message. */
   String UNEXP_NODE = "Unexpected node: %.";
   /** Error message. */
-  String HEAD_METHOD = "HEAD method must only return one 'restxq:response' element.";
+  String HEAD_METHOD = "HEAD method must return a single 'restxq:response' element.";
   /** Error message. */
   String METHOD_VALUE = "Method % does not allow values.";
   /** Error message. */
@@ -83,5 +98,31 @@ public interface RestXqText {
   /** Error message. */
   String PATH_CONFLICT = "Several functions assigned to path \"%\":%";
   /** Error message. */
+  String ERROR_CONFLICT = "Several functions assigned to error \"%\":%";
+  /** Error message. */
   String NO_VALUE = "'%' element has no string value.";
+
+  /** QName. */
+  QNm Q_STATUS = QNm.get(STATUS);
+  /** QName. */
+  QNm Q_REASON = QNm.get(REASON);
+  /** QName. */
+  QNm Q_MESSAGE = QNm.get(MESSAGE);
+  /** QName. */
+  QNm Q_NAME = QNm.get(NAME);
+  /** QName. */
+  QNm Q_VALUE = QNm.get(VALUE);
+
+  /** Serializer node test. */
+  NodeTest OUTPUT_SERIAL = new NodeTest(FuncParams.Q_SPARAM);
+  /** HTTP Response test. */
+  NodeTest HTTP_RESPONSE = new NodeTest(QNm.get(RESPONSE, HTTPURI));
+  /** RESTXQ Response test. */
+  NodeTest REST_RESPONSE = new NodeTest(QNm.get(RESPONSE, RESTURI));
+  /** RESTXQ Redirect test. */
+  NodeTest REST_REDIRECT = new NodeTest(QNm.get(REDIRECT, RESTURI));
+  /** RESTXQ Forward test. */
+  NodeTest REST_FORWARD = new NodeTest(QNm.get(FORWARD, RESTURI));
+  /** HTTP Header test. */
+  NodeTest HTTP_HEADER = new NodeTest(QNm.get(HEADER, HTTPURI));
 }

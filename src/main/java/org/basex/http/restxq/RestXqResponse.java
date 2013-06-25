@@ -4,106 +4,74 @@ import static org.basex.http.restxq.RestXqText.*;
 import static org.basex.util.Token.*;
 
 import org.basex.http.*;
-import org.basex.io.*;
 import org.basex.io.serial.*;
 import org.basex.query.*;
 import org.basex.query.expr.*;
 import org.basex.query.func.*;
 import org.basex.query.iter.*;
-import org.basex.query.path.*;
 import org.basex.query.value.item.*;
 import org.basex.query.value.node.*;
 import org.basex.query.value.type.*;
 import org.basex.query.var.*;
-import org.basex.util.*;
 
 /**
  * This class creates a new HTTP response.
- * 
+ *
  * @author BaseX Team 2005-12, BSD License
  * @author Christian Gruen
  */
 final class RestXqResponse {
-  /** QName. */
-  private static final QNm Q_STATUS = new QNm(STATUS);
-  /** QName. */
-  private static final QNm Q_REASON = new QNm(REASON);
-  /** QName. */
-  private static final QNm Q_MESSAGE = new QNm(MESSAGE);
-  /** QName. */
-  private static final QNm Q_NAME = new QNm(NAME);
-  /** QName. */
-  private static final QNm Q_VALUE = new QNm(VALUE);
-
-  /** Serializer node test. */
-  private static final ExtTest OUTPUT_SERIAL = new ExtTest(NodeType.ELM,
-      FuncParams.Q_SPARAM);
-  /** HTTP Response test. */
-  private static final ExtTest HTTP_RESPONSE = new ExtTest(NodeType.ELM, new QNm(
-      RESPONSE, QueryText.HTTPURI));
-  /** RESTXQ Response test. */
-  private static final ExtTest REST_RESPONSE = new ExtTest(NodeType.ELM, new QNm(
-      RESPONSE, QueryText.RESTURI));
-  /** RESTXQ Redirect test. */
-  private static final ExtTest REST_REDIRECT = new ExtTest(NodeType.ELM, new QNm(
-      REDIRECT, QueryText.RESTURI));
-  /** RESTXQ Forward test. */
-  private static final ExtTest REST_FORWARD = new ExtTest(NodeType.ELM, new QNm(FORWARD,
-      QueryText.RESTURI));
-  /** HTTP Header test. */
-  private static final ExtTest HTTP_HEADER = new ExtTest(NodeType.ELM, new QNm(HEADER,
-      QueryText.HTTPURI));
-
   /** Function to be evaluated. */
   private final RestXqFunction function;
   /** Query context. */
-  private final QueryContext qc;
+  private final QueryContext query;
   /** HTTP context. */
   private final HTTPContext http;
+  /** Optional query error. */
+  private final QueryException error;
 
   /**
    * Constructor.
    * @param rxf function to be evaluated
    * @param ctx query context
    * @param hc HTTP context
+   * @param err optional query error
    */
-  RestXqResponse(final RestXqFunction rxf, final QueryContext ctx, final HTTPContext hc) {
+  RestXqResponse(final RestXqFunction rxf, final QueryContext ctx, final HTTPContext hc,
+      final QueryException err) {
     function = rxf;
-    qc = ctx;
+    query = ctx;
     http = hc;
+    error = err;
   }
 
   /**
    * Evaluates the specified function and creates a response.
-   * @throws Exception exception
+   * @throws Exception exception (including unexpected ones)
    */
   void create() throws Exception {
     String redirect = null, forward = null;
+    RestXqRespBuilder resp = null;
 
     try {
       // bind variables
       final XQStaticFunction uf = function.function;
       final Expr[] args = new Expr[uf.getArgs().length];
-      function.bind(http, args);
-
-      // System.out.println("wooosaa" + uf.getClass());
+      function.bind(http, args, error);
 
       // wrap function with a function call
-      final StaticFuncCall call = new BaseFuncCall(uf.getName(), args, uf.getSc(),
-          uf.getInfo());
-      call.init(uf);
-      final MainModule mod = new MainModule(call, new VarScope(), null);
+      final StaticFuncCall sfc = new BaseFuncCall(uf.getName(), args, uf.getSc(), uf.getInfo()).init(uf);
+      final MainModule mod = new MainModule(sfc, new VarScope(), null);
 
       // assign main module and http context and register process
-      qc.mainModule(mod);
-      qc.context(http, null);
-      qc.context.register(qc);
+      query.mainModule(mod);
+      query.context(http, null);
+      query.context.register(query);
 
       // compile and evaluate query
-      qc.compile();
-      final Iter iter = qc.iter();
+      query.compile();
+      final Iter iter = query.iter();
       Item item = iter.next();
-      ANode resp = null;
 
       // handle response element
       if(item != null && item.type.isNode()) {
@@ -123,106 +91,35 @@ final class RestXqResponse {
           return;
         }
         if(REST_RESPONSE.eq(node)) {
-          resp = node;
-          item = iter.next();
+          resp = new RestXqRespBuilder();
+          resp.build(node, function, iter, http);
+          return;
         }
       }
 
-      // HEAD method may only return a single response element
-      if(function.methods.size() == 1 && function.methods.contains(HTTPMethod.HEAD)) {
-        if(resp == null || item != null) function.error(HEAD_METHOD);
-      }
+      // HEAD method must return a single response element
+      if(function.methods.size() == 1 && function.methods.contains(HTTPMethod.HEAD))
+        function.error(HEAD_METHOD);
 
-      // get serializer, initialize response and serialize result
-      final SerializerProp sp = process(resp);
+      // serialize result
+      final SerializerProp sp = function.output;
       http.initResponse(sp);
       final Serializer ser = Serializer.get(http.res.getOutputStream(), sp);
-      for(; item != null; item = iter.next())
-        ser.serialize(item);
+      for(; item != null; item = iter.next()) ser.serialize(item);
       ser.close();
 
     } finally {
-      if(qc.context.securityManager.isAuthenticated()) {
-        Util.errln(
-            "Security crtical situation! the user %s is still authenticated in the current thread! This should never be the case after a finished request!",
-            qc.context.securityManager.getUserName());
-      }
-      qc.close();
-      try {
-        qc.context.unregister(qc);
-
-      } catch(final Exception e) {
-        e.printStackTrace();
-      }
+      query.close();
+      query.context.unregister(query);
 
       if(redirect != null) {
         http.res.sendRedirect(redirect);
       } else if(forward != null) {
         http.req.getRequestDispatcher(forward).forward(http.req, http.res);
+      } else if(resp != null) {
+        if(resp.status != 0) http.status(resp.status, resp.message, resp.error);
+        http.res.getOutputStream().write(resp.cache.toArray());
       }
     }
-  }
-
-  /**
-   * Processes the response element and creates the serialization parameters.
-   * @param response response element
-   * @return serialization properties
-   * @throws Exception exception (also unexpected ones)
-   */
-  private SerializerProp process(final ANode response) throws Exception {
-    SerializerProp sp = function.output;
-
-    if(response != null) {
-      // don't allow attributes
-      for(final ANode a : response.attributes())
-        function.error(UNEXP_NODE, a);
-
-      String cType = null;
-      for(final ANode n : response.children()) {
-        // process http:response element
-        if(HTTP_RESPONSE.eq(n)) {
-          // check status and reason
-          byte[] sta = null;
-          byte[] msg = null;
-          for(final ANode a : n.attributes()) {
-            final QNm qnm = a.qname();
-            if(qnm.eq(Q_STATUS)) sta = a.string();
-            else if(qnm.eq(Q_REASON) || qnm.eq(Q_MESSAGE)) msg = a.string();
-            else function.error(UNEXP_NODE, a);
-          }
-          if(sta != null) http.status(toInt(sta), msg != null ? string(msg) : null);
-
-          for(final ANode c : n.children()) {
-            // process http:header elements
-            if(HTTP_HEADER.eq(c)) {
-              final byte[] nam = c.attribute(Q_NAME);
-              final byte[] val = c.attribute(Q_VALUE);
-              if(nam != null && val != null) {
-                final String key = string(nam);
-                final String value = string(val);
-                if(key.equals(MimeTypes.CONTENT_TYPE)) {
-                  cType = value;
-                } else {
-                  http.res.setHeader(key, value);
-                }
-              }
-            } else {
-              function.error(UNEXP_NODE, c);
-            }
-          }
-        } else if(OUTPUT_SERIAL.eq(n)) {
-          // process output:serialization-parameters
-          sp = FuncParams.serializerProp(n, null);
-        } else {
-          function.error(UNEXP_NODE, n);
-        }
-      }
-      // set content type
-      if(cType != null) {
-        if(sp == null) sp = new SerializerProp(function.output.toString());
-        sp.set(SerializerProp.S_MEDIA_TYPE, cType);
-      }
-    }
-    return sp;
   }
 }
