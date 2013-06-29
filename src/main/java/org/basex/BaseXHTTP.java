@@ -11,8 +11,6 @@ import javax.net.ssl.*;
 import org.basex.core.*;
 import org.basex.http.*;
 import org.basex.io.*;
-import org.basex.security.impl.*;
-import org.basex.security.jaas.*;
 import org.basex.server.*;
 import org.basex.util.*;
 import org.eclipse.jetty.server.*;
@@ -41,8 +39,8 @@ public final class BaseXHTTP {
   private boolean stopped;
 
   /**
-   * Main method, launching the HTTP services.
-   * Command-line arguments are listed with the {@code -h} argument.
+   * Main method, launching the HTTP services. Command-line arguments are listed with the
+   * {@code -h} argument.
    * @param args command-line arguments
    */
   public static void main(final String... args) {
@@ -65,10 +63,6 @@ public final class BaseXHTTP {
     // context must be initialized after parsing of arguments
     context = HTTPContext.init();
 
-    context.moduleHandlers.addHandler(SecurityModuleHandler.NAMESPACE.getBytes(),
-        new SecurityModuleHandler());
-    context.securityManager.addAuthenticationProvider(new JaasAuthenticationProvider(
-        context));
     // create jetty instance and set default context to HTTP path
     final MainProp mprop = context.mprop;
     final String webapp = mprop.get(MainProp.WEBPATH);
@@ -98,7 +92,7 @@ public final class BaseXHTTP {
 
     // start web server in a new process
     if(service) {
-      Connector connector = jetty.getConnectors()[0];
+      final Connector connector = jetty.getConnectors()[0];
       start(connector.getPort(), connector instanceof SslSelectChannelConnector, args);
 
       for(final Connector c : jetty.getConnectors())
@@ -222,7 +216,7 @@ public final class BaseXHTTP {
         res = new IOFile(res, file);
         // update file in resource path if it has changed
         if(!res.exists() || !Token.eq(data, res.read())) {
-          Util.errln("Updating " +  res);
+          Util.errln("Updating " + res);
           res.dir().md();
           res.write(in.read());
         }
@@ -238,7 +232,7 @@ public final class BaseXHTTP {
 
     if(create) {
       // create configuration file
-      Util.errln("Creating " +  trg);
+      Util.errln("Creating " + trg);
       trg.dir().md();
       trg.write(data);
     }
@@ -251,8 +245,10 @@ public final class BaseXHTTP {
    * @throws IOException I/O exception
    */
   private void parseArguments(final String[] args) throws IOException {
-    /* command-line properties not be stored in system properties (instead of
-     * context.mprop). this way, they will not be overwritten by web.xml settings. */
+    /*
+     * command-line properties not be stored in system properties (instead of
+     * context.mprop). this way, they will not be overwritten by web.xml settings.
+     */
     final Args arg = new Args(args, this, HTTPINFO, Util.info(CONSOLE, HTTP));
     boolean daemon = false;
     while(arg.more()) {
