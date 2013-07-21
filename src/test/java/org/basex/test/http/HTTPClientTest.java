@@ -87,15 +87,11 @@ public class HTTPClientTest extends HTTPTest {
   @Test
   public void post() throws Exception {
     // POST - query
-    QueryProcessor qp = new QueryProcessor("http:send-request("
-        + "<http:request method='post'>"
-        + "<http:body media-type='application/xml'>"
-        + "<query xmlns='" + URL + "/rest'>"
-        + "<text>1</text>"
-        + "<parameter name='wrap' value='yes'/>"
-        + "</query>" + "</http:body>"
+     QueryProcessor qp = new QueryProcessor("http:send-request("
+        + "<http:request method='put' status-only='true'>"
+        + "<http:body media-type='text/xml'>" + BOOKS + "</http:body>"
         + "</http:request>, '" + RESTURL + "')", ctx);
-    checkResponse(qp.execute(), HttpURLConnection.HTTP_OK, 2);
+    checkResponse(qp.execute(), HttpURLConnection.HTTP_CREATED, 1);
     qp.close();
 
     // Execute the same query but with content set from $bodies
